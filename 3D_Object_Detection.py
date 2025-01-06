@@ -6,7 +6,7 @@ from ultralytics import YOLO
 from collections import deque
 from libs.bbox3d_utils import *  # 3D 바운딩 박스 관련 유틸리티 함수
 from libs.Plotting import *  # 3D 시각화를 위한 함수
-from train import *  # 모델 학습 관련 함수
+from Train import *  # 모델 학습 관련 함수
 from tensorflow.keras.applications import *
 from tensorflow.keras.models import *
 from tensorflow.keras.optimizers import *
@@ -17,18 +17,36 @@ from tensorflow.keras import backend as K
 from tensorflow.keras.utils import get_custom_objects
 import matplotlib.pyplot as plt
 
+# 경로 설정
+script_dir = os.path.dirname(os.path.abspath(__file__))  # 스크립트 파일 위치
+os.chdir(script_dir)
+print("Current Directory:", os.getcwd())
+
 # TensorFlow 로그 레벨 설정 (경고 및 정보 로그를 무시)
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 # 모델 및 비디오 디렉토리 설정
-Models_dir = "../00_Models"
-Videos_dir = "../00_Sample_Video"
+Models_dir = os.path.abspath(os.path.join(script_dir, "../00_Models"))
+Videos_dir = os.path.abspath(os.path.join(script_dir, "../00_Sample_Video"))
 
-# 모델 및 비디오 파일 경로 설정
-## select model  and input size
-select_model = "mobilenetv2"  # 사용할 모델 선택
+## select 3D model  and input size
+####### select model  ########
+# select_3d_model = 'resnet50'
+# select_3d_model ='resnet101'
+# select_3d_model = 'resnet152'
+# select_3d_model = 'vgg11'
+# select_3d_model = 'vgg16'
+# select_3d_model = 'vgg19'
+# select_3d_model = 'efficientnetb0'
+# select_3d_model = 'efficientnetb5'
+# select_3d_model = 'mobilenetv2'
+select_3d_model = "mobilenetv2"  # 사용할 모델 선택
 
-model_dir = os.path.join(Models_dir, select_model)  # 모델 디렉토리 경로
+# 2D 모델 (YOLOv8)
+bbox_2d_model_dir = os.path.join(Models_dir, "yolov8n-seg.pt")
+
+
+bbox_3d_model_dir = os.path.join(Models_dir, select_3d_model)  # 모델 디렉토리 경로
 video_in_dir = os.path.join(Videos_dir, "input")  # 비디오 입력 경로
 video_out_dir = os.path.join(Videos_dir, "output")  # 비디오 출력 경로
 
@@ -46,7 +64,7 @@ get_custom_objects().update(
 )
 
 # 3D 모델 로드
-weights_file = os.path.join(model_dir, f"{select_model}_weights.keras")
+weights_file = os.path.join(bbox_3d_model_dir, f"{select_3d_model}_weights.keras")
 if os.path.exists(weights_file):
     bbox3d_model = load_model(
         weights_file,
@@ -84,10 +102,8 @@ dims_avg = {
     "Tram": np.array([3.56020305, 2.40172589, 18.60659898]),
 }
 
-# 2D 모델 (YOLOv8)
-output_dir = "../00_Models"
-bbox2d_model = YOLO(os.path.join(output_dir, "yolov8n-seg.pt"))  # YOLO 모델 로드
-bbox2d_model.overrides.update(
+bbox_2d_model = YOLO(bbox_2d_model_dir)  # YOLO 모델 로드
+bbox_2d_model.overrides.update(
     {
         "conf": 0.9,  # Confidence threshold
         "iou": 0.55,  # IOU threshold for Non-Maximum Suppression
@@ -115,7 +131,7 @@ frame_height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 # 비디오 출력 설정
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-# out = cv2.VideoWriter(f'{video_out_dir}/{select_model}_output_video.mp4', fourcc, 15, (frame_width, frame_height))
+# out = cv2.VideoWriter(f'{video_out_dir}/{select_3d_model}_output_video.mp4', fourcc, 15, (frame_width, frame_height))
 
 
 # 객체 추적을 위한 딕셔너리
@@ -131,7 +147,7 @@ def process2D(image, track=True, device="cuda"):
     confidences = []
 
     if track:
-        results = bbox2d_model.track(image, verbose=False, device=device, persist=True)
+        results = bbox_2d_model.track(image, verbose=False, device=device, persist=True)
 
         # 기존 트래킹된 객체 ID 업데이트
         for id_ in list(tracking_trajectories.keys()):
@@ -437,7 +453,7 @@ while True:
     # BEV와 병합된 이미지 출력 (BEV_plot이 True인 경우)
     if Write_Flag == 0:
         out = cv2.VideoWriter(
-            f"{video_out_dir}/{select_model}_output_video.mp4",
+            f"{video_out_dir}/{select_3d_model}_output_video.mp4",
             fourcc,
             15,
             (width2, height2),

@@ -37,7 +37,9 @@ from imgaug.augmentables import KeypointsOnImage
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"  # 사용할 GPU 번호 설정
 
+#BIN = 6이면 각 앵커는 360도를 60도 간격으로 나눈 6개의 방향(0도, 60도, 120도, 180도, 240, 300, 360도)
 BIN, OVERLAP = 6, 0.1  # 각도 간격과 오버랩 비율 설정
+
 W = 1.0  # 기본 설정값
 ALPHA = 1.0  # 기본 설정값
 MAX_JIT = 3  # JIT 설정
@@ -47,6 +49,16 @@ BATCH_SIZE = 8  # 배치 크기
 AUGMENTATION = False  # 데이터 증강 여부 설정
 
 ## 모델 선택 및 입력 크기 설정
+####### select model  ########
+# select_model = 'resnet50'
+# select_model ='resnet101'
+# select_model = 'resnet152'
+# select_model = 'vgg11'
+# select_model = 'vgg16'
+# select_model = 'vgg19'
+# select_model = 'efficientnetb0'
+# select_model = 'efficientnetb5'
+# select_model = 'mobilenetv2'
 select_model = "mobilenetv2"  # 선택할 모델 (여기서는 MobileNetV2 사용)
 
 # 데이터셋 경로 설정
@@ -401,7 +413,7 @@ if __name__ == "__main__":
         initial_epoch=last_epoch,
         steps_per_epoch=train_num,
         epochs=last_epoch + 10,
-        verbose=1,
+        verbose=1,  #로그 상세 정보 : 0: 로그없음, 1: 세로진행바 , 2:가로 진행바
         validation_data=valid_gen,
         validation_steps=valid_num,
         callbacks=[early_stop, checkpoint, tensorboard],
