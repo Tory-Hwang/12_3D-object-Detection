@@ -61,14 +61,21 @@ AUGMENTATION = False  # 데이터 증강 여부 설정
 # select_model = 'mobilenetv2'
 select_model = "mobilenetv2"  # 선택할 모델 (여기서는 MobileNetV2 사용)
 
-# 데이터셋 경로 설정
-label_dir = "../00_Dataset/kitti/label_2/"  # 라벨 데이터 디렉토리
-image_dir = "../00_Dataset/kitti/image_2/training/"  # 이미지 디렉토리
 
-# 모델 출력 디렉토리 설정
-output_dir = "../00_Models"
-if not os.path.exists(output_dir):
-    os.makedirs(output_dir)
+#=================================================================
+#초기값 설정
+#=================================================================
+#실행 경로 설정 
+# 경로 설정
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+Models_dir = os.path.abspath(os.path.join(script_dir, "../00_Models"))
+Dataset_dir = os.path.abspath(os.path.join(script_dir, "../00_Dataset"))
+
+label_dir =  os.path.join(Dataset_dir, "kitti", "label_2/")  # 라벨 데이터 디렉토리
+image_dir =  os.path.join(Dataset_dir, "kitti", "image_2", "training/")  # 이미지 디렉토리
+output_dir = Models_dir   # 모델 출력 디렉토리 설정
+
 
 # 이미지 데이터 증강 파이프라인 설정
 seq = iaa.Sequential(
@@ -337,22 +344,22 @@ def orientation_loss(y_true, y_pred):
 
 # 모델 학습 준비
 if __name__ == "__main__":
-    model_dir = os.path.join(output_dir, select_model)
-    if not os.path.exists(model_dir):
-        os.makedirs(model_dir)
+    make_model_dir = os.path.join(output_dir, select_model)
+    if not os.path.exists(make_model_dir):
+        os.makedirs(make_model_dir)
 
     # 콜백 함수 설정 (조기 종료, 모델 체크포인트, 텐서보드)
     early_stop = EarlyStopping(
         monitor="val_loss", min_delta=0.001, patience=10, mode="min", verbose=1
     )
     checkpoint = ModelCheckpoint(
-        os.path.join(model_dir, f"{select_model}_weights.keras"),
+        os.path.join(make_model_dir, f"{select_model}_weights.keras"),
         monitor="val_loss",
         verbose=1,
         save_best_only=True,
     )
     tensorboard = TensorBoard(
-        log_dir=os.path.join(model_dir, "logs/"),
+        log_dir=os.path.join(make_model_dir, "logs/"),
         histogram_freq=0,
         write_graph=True,
         write_images=False,
@@ -371,7 +378,7 @@ if __name__ == "__main__":
     print("train and val split : ", trv_split, all_exams - trv_split)
 
     # 모델 로드 또는 새로 학습 시작
-    weights_file = os.path.join(model_dir, f"{select_model}_weights.keras")
+    weights_file = os.path.join(make_model_dir, f"{select_model}_weights.keras")
     if os.path.exists(weights_file):
         model = load_model(weights_file)
         print(model.summary())
@@ -380,7 +387,7 @@ if __name__ == "__main__":
         print(f"The file {weights_file} does not exist ..starting from epoch 1.")
 
     # 학습 기록 파일 설정
-    history_file = os.path.join(model_dir, f"{select_model}_training_history.csv")
+    history_file = os.path.join(make_model_dir, f"{select_model}_training_history.csv")
     try:
         history_df = pd.read_csv(history_file)
         last_epoch = history_df.index[-1] + 1
@@ -455,6 +462,6 @@ if __name__ == "__main__":
 
     plt.tight_layout()
     plt.suptitle(select_model)
-    results_plot_file = os.path.join(model_dir, f"{select_model}_results_plot.png")
+    results_plot_file = os.path.join(make_model_dir, f"{select_model}_results_plot.png")
     plt.savefig(results_plot_file)
     plt.show()

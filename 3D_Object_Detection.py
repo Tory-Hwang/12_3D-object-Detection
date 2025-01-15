@@ -17,18 +17,6 @@ from tensorflow.keras import backend as K
 from tensorflow.keras.utils import get_custom_objects
 import matplotlib.pyplot as plt
 
-# 경로 설정
-script_dir = os.path.dirname(os.path.abspath(__file__))  # 스크립트 파일 위치
-os.chdir(script_dir)
-print("Current Directory:", os.getcwd())
-
-# TensorFlow 로그 레벨 설정 (경고 및 정보 로그를 무시)
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
-
-# 모델 및 비디오 디렉토리 설정
-Models_dir = os.path.abspath(os.path.join(script_dir, "../00_Models"))
-Videos_dir = os.path.abspath(os.path.join(script_dir, "../00_Sample_Video"))
-
 ## select 3D model  and input size
 ####### select model  ########
 # select_3d_model = 'resnet50'
@@ -42,17 +30,30 @@ Videos_dir = os.path.abspath(os.path.join(script_dir, "../00_Sample_Video"))
 # select_3d_model = 'mobilenetv2'
 select_3d_model = "mobilenetv2"  # 사용할 모델 선택
 
-# 2D 모델 (YOLOv8)
+# TensorFlow 로그 레벨 설정 (경고 및 정보 로그를 무시)
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+#=================================================================
+#초기값 설정
+#=================================================================
+#실행 경로 설정 
+# 경로 설정
+script_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(script_dir)
+Models_dir = os.path.abspath(os.path.join(script_dir, "../00_Models"))
+Dataset_dir = os.path.abspath(os.path.join(script_dir, "../00_Dataset"))
+Videos_dir = os.path.abspath(os.path.join(script_dir, "../00_Sample_Video"))
+
+# 모델 및 비디오 디렉토리 설정
 bbox_2d_model_dir = os.path.join(Models_dir, "yolov8n-seg.pt")
-
-
 bbox_3d_model_dir = os.path.join(Models_dir, select_3d_model)  # 모델 디렉토리 경로
+
 video_in_dir = os.path.join(Videos_dir, "input")  # 비디오 입력 경로
 video_out_dir = os.path.join(Videos_dir, "output")  # 비디오 출력 경로
 
+
 # 비디오 읽기
 video = cv2.VideoCapture(
-    os.path.join(video_in_dir, "2011_10_03_drive_0034_sync_video_trimmed.mp4")
+    os.path.join(video_in_dir, "3d_drive.mp4")
 )
 
 # 커스텀 객체 등록 (모델 학습 시 사용한 커스텀 함수들)
